@@ -21,4 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', views.users_list),
     path('users/<int:id>/', views.handle_one_user),
+    path('users/<int:id>/posts/', views.handle_user_posts),
+    path('posts/', views.posts_list),
+    path('posts/<int:id>/', views.handle_one_post),
 ]
