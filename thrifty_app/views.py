@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.serializers import serialize
+import json
 
 # Create your views here.
 from rest_framework.response import Response
@@ -25,7 +27,7 @@ def users_list(request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response({"Success": "user created"},status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -34,7 +36,7 @@ def handle_one_user(request, id):
     try:
         user = User.objects.get(id=id)
     except User.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "user does not exist"},status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
 
@@ -51,7 +53,7 @@ def handle_one_user(request, id):
 
     elif request.method == 'DELETE':
         user.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"Success": "user deleted"}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET','POST'])
@@ -62,42 +64,34 @@ def handle_user_posts(request, id):
     try:
         user = User.objects.get(id=id)
     except User.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "user does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'POST':
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
+            return Response({"Success": "post created"},status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
-            post_list = []
-            posts = user.post.all()
-            post_list.append(posts)
-            return JsonResponse(post_list)
-    # return Response(status=status.HTTP_204_NO_CONTENT)
+            posts = user.has_posts.all()
+
+
+            serialized_data = serialize("json", posts)
+            serialized_data = json.loads(serialized_data)
+            return Response(serialized_data, status=status.HTTP_200_OK)
 
 
 ###### POST VIEWs ###########
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 def posts_list(request):
-    if request.method == 'GET':
         data = Post.objects.all()
 
         serializer = PostSerializer(data, context={'request': request}, many=True)
 
         return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = PostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET','PUT', 'DELETE'])
 def handle_one_post(request, id):
@@ -109,7 +103,7 @@ def handle_one_post(request, id):
     if request.method == 'GET':
 
         serializer = PostSerializer(post, context={'request': request})
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
     elif request.method == 'PUT':
@@ -121,7 +115,7 @@ def handle_one_post(request, id):
 
     elif request.method == 'DELETE':
         post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"Success": "post deleted"}, status=status.HTTP_204_NO_CONTENT)
 
 
 
