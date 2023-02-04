@@ -14,6 +14,19 @@ from .serializers import *
 
 #### USER VIEWS #########
 
+@api_view(['GET'])
+def user_verify(request):
+
+    request_username = request.data['username']
+    request_password = request.data['password']
+
+    try:
+        user = User.objects.get(username=request_username, password=request_password)
+    except User.DoesNotExist:
+        return Response({"error": "user does not exist"},status=status.HTTP_404_NOT_FOUND)
+    serializer = UserSerializer(user)
+    return Response(serializer.data)
+
 @api_view(['GET', 'POST'])
 def users_list(request):
     if request.method == 'GET':
@@ -67,16 +80,16 @@ def handle_user_posts(request, id):
         return Response({"error": "user does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'POST':
+        post_list = []
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            post_list.append(serializer)
             return Response({"Success": "post created"},status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
             posts = user.has_posts.all()
-
 
             serialized_data = serialize("json", posts)
             serialized_data = json.loads(serialized_data)
@@ -92,6 +105,7 @@ def posts_list(request):
         serializer = PostSerializer(data, context={'request': request}, many=True)
 
         return Response(serializer.data)
+
 
 @api_view(['GET','PUT', 'DELETE'])
 def handle_one_post(request, id):

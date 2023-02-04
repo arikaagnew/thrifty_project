@@ -24,4 +24,5 @@ urlpatterns = [
     path('users/<int:id>/posts/', views.handle_user_posts),
     path('posts/', views.posts_list),
     path('posts/<int:id>/', views.handle_one_post),
+    path('login/', views.user_verify)
 ]
