@@ -14,7 +14,7 @@ from .serializers import *
 
 #### USER VIEWS #########
 
-@api_view(['GET'])
+@api_view(['POST'])
 def user_verify(request):
 
     request_username = request.data['username']
