@@ -89,7 +89,7 @@ def handle_user_posts(request, id):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
-            posts = user.has_posts.all()
+            posts = user.has_posts.all().order_by('-date_created')
 
             serialized_data = serialize("json", posts)
             serialized_data = json.loads(serialized_data)
@@ -100,14 +100,14 @@ def handle_user_posts(request, id):
 
 @api_view(['GET'])
 def posts_list(request):
-        data = Post.objects.all()
+        data = Post.objects.all().order_by('-date_created')
 
         serializer = PostSerializer(data, context={'request': request}, many=True)
 
         return Response(serializer.data)
 
 
-@api_view(['GET','PUT', 'DELETE'])
+@api_view(['GET','PUT', 'DELETE', 'PATCH', 'POST'])
 def handle_one_post(request, id):
     try:
         post = Post.objects.get(id=id)
@@ -131,5 +131,10 @@ def handle_one_post(request, id):
         post.delete()
         return Response({"Success": "post deleted"}, status=status.HTTP_204_NO_CONTENT)
 
+    elif request.method == 'PATCH':
 
-
+        serializer = PostSerializer(post, data=request.data,context={'request': request}, partial = True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"Success": "post updated"}, status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
